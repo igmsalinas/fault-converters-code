@@ -1,0 +1,28 @@
+.venv/
+.venv_win/
+__pycache__/
+.env
+.ruff_cache
+.pytest_cache
+.agents
+*:Zone.Identifier
+
+# TensorRT plans are hardware/toolchain specific; ONNX intermediates are rebuilt.
+experiments/**/deployment/*.engine
+experiments/**/deployment/*.onnx
+experiments/**/deployment/build_*.log
+
+# PNG/PDF are the publication outputs; SVG remains a local editable derivative.
+docs/plots/jetson_*.svg
+docs/plots/latest_carla_metrics.svg
+docs/plots/native_gpu_*.svg
+
+simulation_results/
+data/buck/buck_data/
+data/buck/simulation_results.zip
+./data/buck/simulation_results.zip
+cache/
+
+# Multi-seed study checkpoints (GBs); results are versioned under papers/results/
+experiments/dataset_01_mlwa_study/
+experiments/dataset_02_mlwa_study/

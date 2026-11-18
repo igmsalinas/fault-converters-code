@@ -1,0 +1,8 @@
+*.engine binary
+*.onnx binary
+*.tflite binary
+experiments/**/*.log -diff
+
+# The complete corrected campaign preserves every trial/final checkpoint and
+# target-generated deployment artifact. Keep this multi-gigabyte binary set
+# pushable to GitHub without rewriting historical experiment commits.

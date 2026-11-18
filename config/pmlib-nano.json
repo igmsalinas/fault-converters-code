@@ -1,0 +1,20 @@
+{
+  "server_ip": "127.0.0.1",
+  "server_port": 6526,
+  "log_filename": "/home/ignaciouc3m/projects/pmlib/server",
+  "computers": {
+    "Jetson-Nano-Host": { "ip": "0.0.0.0" }
+  },
+  "devices": {
+    "Jetson-Nano": {
+      "type": "Nano",
+      "url": "/sys/bus/i2c/drivers/ina3221x/",
+      "max_freq": 10,
+      "lines": {
+        "POM_5V_IN":  { "number": 0, "voltage": 19, "description": "Total 5V module input power" },
+        "POM_5V_GPU": { "number": 1, "voltage": 19, "description": "GPU rail power" },
+        "POM_5V_CPU": { "number": 2, "voltage": 19, "description": "CPU rail power" }
+      }
+    }
+  }
+}

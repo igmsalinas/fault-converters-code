@@ -1,0 +1,204 @@
+import numpy as np
+
+from src.data import manifest as mf
+from src.data.component_ranges import load_ranges
+from src.data.loader import DataLoader
+
+
+def _write_txt(path, n=5):
+    with open(path, "w") as f:
+        f.write("Frequency amp phase\n")
+        for i in range(n):
+            f.write(f"{100.0*(i+1):.6e} {-1.0*i:.6e} {-2.0*i:.6e}\n")
+
+
+# ---------------------------------------------------------------------------
+# Manifest helpers
+# ---------------------------------------------------------------------------
+def test_make_key_is_deterministic():
+    cols = ["Cout", "Esr_C"]
+    k1 = mf.make_key({"Cout": 0.5, "Esr_C": 1.0}, cols)
+    k2 = mf.make_key({"Esr_C": 1.0, "Cout": 0.5}, cols)
+    assert k1 == k2
+    assert mf.make_key({"Cout": 0.5}, cols) != mf.make_key({"Cout": 0.6}, cols)
+
+
+def test_manifest_name_routing():
+    assert mf.manifest_name("grid") == "manifest_grid.csv"
+    assert mf.manifest_name("lhs") == "manifest_lhs.csv"
+    assert mf.manifest_name("random") == "manifest_lhs.csv"
+
+
+def test_writer_roundtrip_and_helpers(tmp_path):
+    path = tmp_path / "manifest_grid.csv"
+    w = mf.ManifestWriter(path, ["Cout", "Esr_C"])
+    w.append("grid_000000.txt", mf.HEALTHY, "normal", 0, "grid", "k0",
+             {"Cout": 1.0, "Esr_C": 1.0})
+    w.append("grid_000001.txt", mf.FAULT, "anomalous", 1, "grid", "k1",
+             {"Cout": 0.5, "Esr_C": 1.0})
+    w.close()
+
+    fields, rows = mf.read_manifest(path)
+    assert fields == mf.BASE_FIELDS + ["Cout", "Esr_C"]
+    assert len(rows) == 2
+    assert mf.component_columns(fields) == ["Cout", "Esr_C"]
+
+    assert mf.existing_keys(rows) == {"k0", "k1"}
+    assert mf.existing_keys(rows, mf.FAULT) == {"k1"}
+    assert mf.count_set(rows, mf.HEALTHY) == 1
+    assert mf.count_set(rows, mf.FAULT) == 1
+    assert mf.next_index(rows) == 2
+
+    index = mf.load_manifest_index(tmp_path)
+    assert index["grid_000001.txt"]["label"] == "anomalous"
+    assert index["grid_000001.txt"]["multipliers"]["Cout"] == 0.5
+
+
+def test_writer_append_resumes_index(tmp_path):
+    path = tmp_path / "manifest_lhs.csv"
+    with mf.ManifestWriter(path, ["Cout"]) as w:
+        w.append("lhs_000000.txt", mf.HEALTHY, "normal", 0, "lhs", "", {"Cout": 1.0})
+    _, rows = mf.read_manifest(path)
+    assert mf.next_index(rows) == 1
+    # Re-open and append: header is reused, no duplicate header row.
+    with mf.ManifestWriter(path, ["Cout"]) as w:
+        w.append("lhs_000001.txt", mf.FAULT, "anomalous", 1, "lhs", "", {"Cout": 0.4})
+    _, rows = mf.read_manifest(path)
+    assert [r["filename"] for r in rows] == ["lhs_000000.txt", "lhs_000001.txt"]
+
+
+# ---------------------------------------------------------------------------
+# Loader reads labels from the manifest
+# ---------------------------------------------------------------------------
+def test_loader_uses_manifest_labels(tmp_path):
+    _write_txt(tmp_path / "lhs_000000.txt")
+    _write_txt(tmp_path / "lhs_000001.txt")
+    with mf.ManifestWriter(tmp_path / "manifest_lhs.csv", ["Cout", "Esr_C"]) as w:
+        w.append("lhs_000000.txt", mf.HEALTHY, "normal", 0, "lhs", "",
+                 {"Cout": 1.0, "Esr_C": 1.0})
+        w.append("lhs_000001.txt", mf.FAULT, "anomalous", 1, "lhs", "",
+                 {"Cout": 0.4, "Esr_C": 1.0})
+
+    dl = DataLoader(data_dir=str(tmp_path))
+    dl.load(use_cache=False)
+    assert dl.get_normal_indices().tolist() == [0]
+    assert dl.get_anomaly_indices().tolist() == [1]
+    # Metadata carries the manifest label and reconstructed pct variations.
+    meta = dl.metadata[1]
+    assert meta.label == "anomalous"
+    assert meta.variations["Cout"] == -60.0  # 0.4x -> -60%
+
+
+# ---------------------------------------------------------------------------
+# Generator planning / resume (no PSIM needed)
+# ---------------------------------------------------------------------------
+def _rows_from_plan(rows_by_file):
+    """Turn planned rows into manifest-style dict rows (as read_manifest yields)."""
+    out = []
+    for fname, r in rows_by_file.items():
+        row = {
+            "filename": fname, "set": r["set_name"], "label": r["label"],
+            "n_faults": str(r["n_faults"]), "mode": r["mode"], "key": r["key"],
+        }
+        row.update({name: str(value) for name, value in r["multipliers"].items()})
+        out.append(row)
+    return out
+
+
+def test_plan_generation_grid_resume():
+    from data.generate_data import plan_generation
+    comps = ["Cout"]
+    nominal = {"Cout": 100e-6}
+    ranges = load_ranges("data/buck/component_ranges.json")
+    normal_combos = [{"Cout": 1.0}, {"Cout": 1.1}]
+    fault_combos = [{"Cout": 0.5}]
+
+    tasks, rbf = plan_generation(normal_combos, fault_combos, comps, nominal, ranges,
+                                 "grid", "grid", [], [])
+    assert len(tasks) == 3  # 2 healthy + 1 fault, all new
+    assert {t[0] for t in tasks} == set(rbf)
+
+    grid_rows = _rows_from_plan(rbf)
+    tasks2, _ = plan_generation(normal_combos, fault_combos, comps, nominal, ranges,
+                                "grid", "grid", grid_rows, [])
+    assert len(tasks2) == 0  # everything already present -> resume skips all
+
+
+def test_plan_generation_lhs_topup():
+    from data.generate_data import plan_generation
+    comps = ["Cout"]
+    nominal = {"Cout": 100e-6}
+    ranges = load_ranges("data/buck/component_ranges.json")
+    normal_combos = [{"Cout": value} for value in (0.90, 0.95, 1.00, 1.05, 1.10)]
+    fault_combos = [{"Cout": value} for value in (0.4, 0.5, 0.6)]
+
+    # Simulate an interrupted first run containing two healthy samples and one
+    # fault, then rerun the same seeded plans at their full target sizes.
+    _, initial_normal = plan_generation(
+        normal_combos[:2], [], comps, nominal, ranges, "lhs", "lhs", [], []
+    )
+    initial_rows = _rows_from_plan(initial_normal)
+    _, initial_fault = plan_generation(
+        [], fault_combos[:1], comps, nominal, ranges, "lhs", "lhs", [], initial_rows
+    )
+    lhs_rows = initial_rows + _rows_from_plan(initial_fault)
+    tasks, rbf = plan_generation(normal_combos, fault_combos, comps, nominal, ranges,
+                                 "lhs", "lhs", [], lhs_rows)
+    # top-up: (5-2) healthy + (3-1) fault = 5 new; ids continue from index 3
+    assert len(tasks) == 5
+    assert min(rbf) == "lhs_000003.txt"
+    resumed_values = {round(values[0] / nominal["Cout"], 6) for _, values in tasks}
+    assert resumed_values == {1.0, 1.05, 1.1, 0.5, 0.6}
+    assert all(row["key"] for row in rbf.values())
+
+
+def test_plan_generation_lhs_rejects_duplicate_candidate_vectors():
+    from data.generate_data import plan_generation
+
+    comps = ["Cout"]
+    nominal = {"Cout": 100e-6}
+    ranges = load_ranges("data/buck/component_ranges.json")
+    combos = [{"Cout": 1.0}, {"Cout": 1.0}]
+
+    import pytest
+
+    with pytest.raises(ValueError, match="without duplicate component vectors"):
+        plan_generation(combos, [], comps, nominal, ranges, "lhs", "lhs", [], [])
+
+
+def test_build_fault_combinations_lhs_interleaves_round_robin_and_varies_rout():
+    from data.generate_data import build_fault_combinations_lhs, build_normal_combinations
+    from src.data.component_ranges import ANOMALOUS, NORMAL, classify_variations, mult_to_pct
+
+    ranges = load_ranges("data/buck/component_ranges.json")
+    varied = ["Cout", "Esr_C", "Lout", "Esr_L", "Rds_1", "Rout"]
+    rng = np.random.default_rng(102)
+
+    normal_combos = build_normal_combinations(
+        varied, "lhs", 100, 3, rng, ranges
+    )
+    fault_combos = build_fault_combinations_lhs(
+        varied, 100, rng, ranges, fault_prob=0.0
+    )
+
+    # Operating-point Rout must vary across [0.5, 2.0] in BOTH healthy and faulty sets
+    rout_norm = [c["Rout"] for c in normal_combos]
+    rout_fault = [c["Rout"] for c in fault_combos]
+    assert min(rout_norm) < 0.65 and max(rout_norm) > 1.85
+    assert min(rout_fault) < 0.65 and max(rout_fault) > 1.85
+
+    # Every healthy combo classifies as NORMAL; every faulty combo classifies as ANOMALOUS
+    for c in normal_combos:
+        assert classify_variations({k: mult_to_pct(v) for k, v in c.items()}, ranges) == NORMAL
+    for c in fault_combos:
+        assert classify_variations({k: mult_to_pct(v) for k, v in c.items()}, ranges) == ANOMALOUS
+
+    # Round-robin primary fault interleaving: even the first 25 combos must contain
+    # exactly 5 single-faults for EACH of the 5 active fault components!
+    fault_comps = ["Cout", "Esr_C", "Lout", "Esr_L", "Rds_1"]
+    prefix_counts = {fc: 0 for fc in fault_comps}
+    for combo in fault_combos[:25]:
+        for fc in fault_comps:
+            if ranges[fc].classify_multiplier(combo[fc]) == ANOMALOUS:
+                prefix_counts[fc] += 1
+    assert prefix_counts == {fc: 5 for fc in fault_comps}

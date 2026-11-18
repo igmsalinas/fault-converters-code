@@ -1,0 +1,31 @@
+diff --git a/server/pmlib/devices/Nano.hpp b/server/pmlib/devices/Nano.hpp
+--- a/server/pmlib/devices/Nano.hpp
++++ b/server/pmlib/devices/Nano.hpp
+@@ -45 +45 @@ namespace PMLib
+-            std::vector<ifstream> files;
++            std::vector<std::string> files;
+@@ -53 +53,7 @@ namespace PMLib
+-                    getline(files[i],line);
++                    // sysfs attributes are not regular seekable files. Reopen
++                    // each attribute for every sample instead of seeking a
++                    // persistent stream, which otherwise reaches EOF after the
++                    // first read and terminates the Nano sampling thread.
++                    ifstream file(files[i]);
++                    if (!getline(file, line))
++                        throw std::runtime_error("Could not read " + files[i]);
+@@ -55 +60,0 @@ namespace PMLib
+-                    files[i].seekg(0);
+diff --git a/server/pmlib/server.cpp b/server/pmlib/server.cpp
+--- a/server/pmlib/server.cpp
++++ b/server/pmlib/server.cpp
+@@ -201,3 +200,0 @@ void Server::start_connection() {
+-        if ( _daemonize && daemonize("pmlib.pid") != 0 )  
+-            throw std::runtime_error("Daemonize failed");
+-
+@@ -355,0 +353,6 @@ void Server::run() {
++    // Fork before creating the device sampling threads. Forking after
++    // start_devices() leaves only the calling thread in the daemon child, so
++    // counters connect successfully but never receive power samples.
++    if ( _daemonize && daemonize("pmlib.pid") != 0 )
++        throw std::runtime_error("Daemonize failed");
++

@@ -1,0 +1,70 @@
+{
+  "manifest_summary": {
+    "total_rows": 800,
+    "healthy_rows": 500,
+    "fault_rows": 300,
+    "unique_component_vectors": 800,
+    "duplicate_rows": 0,
+    "rout_healthy_min_max_multiplier": [
+      0.501392,
+      1.999309
+    ],
+    "rout_fault_min_max_multiplier": [
+      0.500979,
+      1.99298
+    ],
+    "fault_strata_total": {
+      "multi_fault": 139,
+      "single_Lout": 31,
+      "single_Esr_L": 30,
+      "single_Cout": 33,
+      "single_Esr_C": 40,
+      "single_Rds_1": 27
+    },
+    "fault_strata_test": {
+      "multi_fault": 97,
+      "single_Esr_L": 21,
+      "single_Lout": 22,
+      "single_Esr_C": 28,
+      "single_Cout": 23,
+      "single_Rds_1": 19
+    },
+    "split_counts": {
+      "train_healthy": 300,
+      "fit_val_healthy": 100,
+      "fit_val_anomalous": 90,
+      "test_healthy": 100,
+      "test_anomalous": 210
+    }
+  },
+  "psim_vs_analytic_rel_l2_error": {
+    "ssa_ignoring_variable_rout_nominal_4ohm": {
+      "count": 800,
+      "median_pct": 14.873691333084343,
+      "mean_pct": 14.907061020450202,
+      "p95_pct": 28.44150518821054,
+      "max_pct": 38.71286462221629
+    },
+    "legacy_lossless_with_true_rout": {
+      "count": 800,
+      "median_pct": 4.032723462029412,
+      "mean_pct": 4.982541839946898,
+      "p95_pct": 10.576037037111908,
+      "max_pct": 23.275001790492905
+    },
+    "exact_ssa_with_true_rout": {
+      "count": 800,
+      "median_pct": 0.095247314195332,
+      "mean_pct": 0.10101998451583699,
+      "p95_pct": 0.13600476060089356,
+      "max_pct": 0.26138153145390974
+    }
+  },
+  "anchor_load_estimation_rel_error": {
+    "count": 300,
+    "median_pct": 6.555747191077577,
+    "mean_pct": 6.765740486489215,
+    "p95_pct": 14.96872003023093,
+    "max_pct": 19.660883607816558
+  }
+}

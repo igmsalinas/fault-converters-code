@@ -1,0 +1,83 @@
+{
+  "manifest_summary": {
+    "total_rows": 12000,
+    "healthy_rows": 10000,
+    "fault_rows": 2000,
+    "unique_healthy_component_vectors": 3457,
+    "unique_fault_component_vectors": 1266,
+    "total_unique_states": 4723,
+    "rout_unique_values_ohm": [],
+    "split_counts": {
+      "train_healthy": 2419,
+      "fit_val_total": 1036,
+      "fit_val_healthy": 518,
+      "fit_val_anomalous": 518,
+      "test_total": 1268,
+      "test_healthy": 520,
+      "test_anomalous": 748
+    }
+  },
+  "psim_vs_analytic_rel_l2_error": {
+    "legacy_eq2_lossless_dc": {
+      "count": 4723,
+      "median_pct": 4.185631287640983,
+      "mean_pct": 4.502763032402778,
+      "p95_pct": 7.265314610046062,
+      "max_pct": 17.832272084412644
+    },
+    "exact_ssa_bidirectional_rds2": {
+      "count": 4723,
+      "median_pct": 0.8466800246466331,
+      "mean_pct": 1.1197536548639027,
+      "p95_pct": 3.252727905249178,
+      "max_pct": 11.227505554033188
+    },
+    "exact_ssa_psim_body_diode_rds2_zero": {
+      "count": 4723,
+      "median_pct": 0.09171479152675828,
+      "mean_pct": 0.09809373795214475,
+      "p95_pct": 0.1286906466108388,
+      "max_pct": 0.2084262313343367
+    },
+    "single_fault_rds2_under_bidirectional_ssa": {
+      "count": 153,
+      "median_pct": 4.40594026981007,
+      "mean_pct": 4.654826267815309,
+      "p95_pct": 7.329746674830561,
+      "max_pct": 8.992224911566609
+    },
+    "single_fault_rds2_under_psim_body_diode_ssa": {
+      "count": 153,
+      "median_pct": 0.0908616048082401,
+      "mean_pct": 0.09425246149563678,
+      "p95_pct": 0.11805370573754236,
+      "max_pct": 0.12146351874557557
+    }
+  },
+  "multiplicative_transfer_ratio_approximation": {
+    "legacy_eq2": {
+      "rel_l2_median": 0.04836357931550746,
+      "rel_l2_mean": 0.09798257533664873,
+      "rel_l2_p90": 0.24582701784428174,
+      "rel_l2_max": 0.6331003607622991,
+      "multi_peak_fraction": 0.042,
+      "true_multi_peak_fraction": 0.0
+    },
+    "exact_ssa_psim_rds2_zero": {
+      "rel_l2_median": 0.04904370555392365,
+      "rel_l2_mean": 0.09929881939340385,
+      "rel_l2_p90": 0.25439289171671375,
+      "rel_l2_max": 0.6390543403006028,
+      "multi_peak_fraction": 0.042,
+      "true_multi_peak_fraction": 0.0
+    },
+    "exact_ssa_hardware_rds2_10mohm": {
+      "rel_l2_median": 0.0482596873870482,
+      "rel_l2_mean": 0.09806069026954024,
+      "rel_l2_p90": 0.2524095352240724,
+      "rel_l2_max": 0.6283355950905462,
+      "multi_peak_fraction": 0.042,
+      "true_multi_peak_fraction": 0.0
+    }
+  }
+}

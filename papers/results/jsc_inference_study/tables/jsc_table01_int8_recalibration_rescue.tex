@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\caption{Table J1. Post-audit INT8 quantization rescue across 5 CARLA architectures via input-clipping saturation, INT8 embedding-bank recalibration, and $M=32$ prototype compression (F1 and FP32 decision discordance \%).}
+\label{tab:jsc_int8_rescue}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Architecture & INT8 Runtime & Naive FP32 Bank F1 (Disc.) & Recal. \texttt{k-NN (k=5)} Zero-\texttt{p95} F1 (Disc.) & Recal. \texttt{Proto-32} Val-Opt F1 & Recal. \texttt{Proto-32} Zero-\texttt{p95} F1 & Detector Size [MB] \\
+\midrule
+\texttt{Conv1D} & \texttt{TFLite INT8} & 0.7421 (51.0\%) & \textbf{0.8425} (6.3\%) & \textbf{0.8513} & 0.8408 & 5.04 $\to$ \textbf{0.37} \\
+\texttt{Conv1D} & \texttt{ONNX INT8} & 0.7421 (51.0\%) & \textbf{0.8518} (9.3\%) & \textbf{0.8104} & 0.8003 & 5.07 $\to$ \textbf{0.41} \\
+\texttt{MLP} & \texttt{TFLite INT8} & 0.7421 (49.8\%) & \textbf{0.8287} (6.7\%) & \textbf{0.8107} & 0.7978 & 4.90 $\to$ \textbf{0.23} \\
+\texttt{MLP} & \texttt{ONNX INT8} & 0.7421 (49.8\%) & \textbf{0.8248} (8.6\%) & \textbf{0.8367} & 0.8138 & 4.94 $\to$ \textbf{0.28} \\
+\texttt{Transformer} & \texttt{TFLite INT8} & 0.7421 (50.5\%) & \textbf{0.8087} (9.8\%) & \textbf{0.8410} & 0.8367 & 1.56 $\to$ \textbf{0.39} \\
+\texttt{Transformer} & \texttt{ONNX INT8} & 0.7421 (50.5\%) & \textbf{0.7808} (13.3\%) & \textbf{0.8018} & 0.8003 & 1.66 $\to$ \textbf{0.50} \\
+\texttt{LSTM} & \texttt{TFLite INT8} & 0.7421 (52.4\%) & \textbf{0.2806} (39.4\%) & \textbf{0.5312} & 0.0957 & 5.30 $\to$ \textbf{0.64} \\
+\texttt{LSTM} & \texttt{ONNX INT8} & 0.7421 (52.4\%) & \textbf{0.7991} (10.7\%) & \textbf{0.7961} & 0.7788 & 6.78 $\to$ \textbf{2.11} \\
+\texttt{GRU} & \texttt{TFLite INT8} & 0.7421 (54.6\%) & \textbf{0.7708} (10.6\%) & \textbf{0.7846} & 0.7684 & 4.06 $\to$ \textbf{1.73} \\
+\texttt{GRU} & \texttt{ONNX INT8} & 0.7421 (54.6\%) & \textbf{0.7786} (6.2\%) & \textbf{0.7708} & 0.7482 & 7.70 $\to$ \textbf{5.37} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

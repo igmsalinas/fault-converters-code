@@ -1,0 +1,7 @@
+{
+  "int8_rows": 60,
+  "pareto_models": [
+    "conv1d",
+    "mlp"
+  ]
+}
