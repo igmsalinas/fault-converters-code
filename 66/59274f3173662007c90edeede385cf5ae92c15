@@ -1,0 +1,21 @@
+papers/jsc_edge_deployment/main.tex
+  s_066a1cbbd1b060::t_e29db0fa3385e5 366,368-370,379
+papers/mmas_anomaly_detection/main.tex
+  s_066a1cbbd1b060::t_81bf0a3f7dd8be 317,345,349,353,363
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "6659274f3173662007c90edeede385cf5ae92c15",
+  "prompts": {},
+  "sessions": {
+    "s_066a1cbbd1b060": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ede1-6a93-7d00-b934-9f7cce57ac7d",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "Ignacio Martin Salinas <ignacioms@inditex.com>"
+    }
+  }
+}
