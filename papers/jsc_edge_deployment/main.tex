@@ -363,11 +363,11 @@ Figs.~\ref{fig:jetson-latency}--\ref{fig:native-gpu-precision} present the compr
 \section{Discussion}
 \label{sec:discussion}
 
-The experimental findings challenge common preconceptions regarding edge model optimization, with implications for heterogeneous supercomputing at the edge:
+The measurements show that runtime, architecture and precision each affect inference latency and decision agreement:
 \begin{enumerate}
-    \item \textbf{The Myth of Universal Quantization Speedup:} Lower precision is not universally beneficial on embedded SoCs. On the Maxwell GPU, TensorRT FP16 matches rather than exceeds FP32 latency (GRU: 29.20~ms vs 29.31~ms) due to the absence of Tensor Core matrix acceleration, serving primarily to reduce serialized engine memory footprint (e.g., Transformer 1402~MB$\to$841~MB CUDA). On CPU, ONNX FP16 is slower than ONNX FP32 due to software half-precision emulation overhead.
-    \item \textbf{Architecture-Specific Operator Wins:} Model architecture dominates execution latency more than bit precision. TensorRT delivers extraordinary gains for recurrent models ($43\times$--$52\times$), transforming unusable CPU models into deployable edge detectors. For feedforward models (MLP, Conv1D), lightweight CPU runtimes (TFLite) outpace TensorRT by avoiding CUDA launch overhead --- a classic host-accelerator dispatch trade-off relevant to supercomputing task mapping.
-    \item \textbf{Fidelity Validation is Essential:} Had this benchmark evaluated models solely by execution latency or tensor MSE, Transformer TensorRT FP16 and LSTM TFLite FP32 would appear optimal. Downstream decision validation exposes that both configurations corrupt classification boundaries, analogous to silent data corruption in HPC --- a hardware-reliability concern.
+    \item \textbf{Reduced precision.} For GRU on TensorRT, latency was similar at FP32 and FP16 (29.31 and 29.20~ms). For the Transformer, the FP16 TensorRT configuration reduced CUDA allocation from 1402 to 841~MB but failed the decision-agreement criterion. ONNX FP16 increased latency over FP32 for all five architectures.
+    \item \textbf{Runtime and architecture.} TensorRT reduced recurrent-network latency by $43\times$--$52\times$ relative to the host Keras configuration. On this device, TensorFlow Lite FP32 was faster than TensorRT for MLP and Conv1D in the batch-1 timing protocol.
+    \item \textbf{Decision agreement.} Transformer TensorRT FP16 and LSTM TensorFlow Lite FP32 reduced latency relative to host Keras FP32 and failed the decision-agreement criterion. This comparison shows why speed and fidelity must be assessed together.
     \item \textbf{Portability across accelerator generations.} The measurements characterize the Jetson Nano with the reported software stack. A separate campaign is needed to evaluate integer acceleration on newer SoCs and to test whether quantization-aware training improves agreement with the FP32 detector.
 \end{enumerate}
 
@@ -376,7 +376,7 @@ The experimental findings challenge common preconceptions regarding edge model o
 
 This study benchmarked 60 attempted model--runtime--precision execution pathways (45 core FP32/FP16 plus 15 INT8) for self-supervised power converter anomaly detectors on the NVIDIA Jetson Nano. Implementing an end-to-end decision validation gate identified 37 validated and 8 fidelity-rejected core configurations; all 15 INT8 configurations were non-deployable. INT8 was systematically analyzed and excluded due to Maxwell hardware limitations, ONNX parser QDQ rejections, and decision corruption. 
 
-The optimal validated operating point is MLP in TensorFlow Lite FP32, achieving 0.168 ms latency, 710.15 inferences/s, and 2.91 mJ dynamic energy per inference. For recurrent architectures, TensorRT FP16 enables practical deployment with $43\times$--$52\times$ latency reductions, and only the evaluated FP32 Transformer paths pass the decision-agreement criterion.
+Among the validated configurations, MLP in TensorFlow Lite FP32 gave the highest sustained throughput, achieving 0.168 ms latency, 710.15 inferences/s, and 2.91 mJ dynamic energy per inference. For recurrent architectures, TensorRT FP16 enables practical deployment with $43\times$--$52\times$ latency reductions, and only the evaluated FP32 Transformer paths pass the decision-agreement criterion.
 
 \subsection{Systems-Level Limitations and Future Research Trajectories}
 While this work establishes rigorous benchmarking and fidelity-gating protocols, three key systems-level limitations define the future research agenda:

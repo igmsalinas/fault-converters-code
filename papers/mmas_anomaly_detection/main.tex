@@ -314,7 +314,7 @@ CARLA--MLP & 0.8707 & 0.9591 & \textbf{0.8155} & 0.8815 & \textbf{0.9161} & 0.95
 
 Table~\ref{tab:main-results} and Fig.~\ref{fig:latest-carla-metrics} report the comparative performance across all five encoder backbones. Conv1D achieves the highest overall classification performance with an F1-score of 0.8897, an accuracy of 0.8809, and a PR-AUC of 0.9570. MLP achieves a comparable ROC-AUC of 0.9161 (+0.0004 over Conv1D) and the highest recall (0.8155), but incurs more false positives (26 vs. 12 for Conv1D), resulting in a lower precision (0.9591 vs. 0.9807) and F1-score (0.8815).
 
-The performance parity between Conv1D and MLP reflects the mathematical structure of the input space. On a fixed, discrete logarithmic frequency grid ($N_f = 101$), each frequency bin $f_k$ corresponds to a fixed physical coordinate rather than an arbitrary translation-invariant time step. An MLP architecture treats each frequency coordinate with independent synaptic weights, capturing global spectral relationships directly. Conv1D complements this by sharing local kernels across neighboring frequency bins, efficiently capturing local slope gradients $\frac{d|G|}{d\log f}$ and phase transitions $\frac{d\angle G}{d\log f}$ associated with resonant displacement $\Delta f_0$.
+The MLP takes the complete spectrum as input. Conv1D shares filters across neighboring bins, which allows the model to represent local changes in slope and phase near resonance. The comparison does not establish which features account for their performance.
 
 Conversely, recurrent architectures (GRU and LSTM) exhibit substantially lower recall ($0.7273$ and $0.7607$) and incur 31--32 false positives, yielding lower F1-scores ($0.8218$ and $0.8442$). Both recurrent models process the grid in frequency order. The benchmark compares complete detector configurations, so the results cannot isolate the effect of the recurrent architecture.
 
@@ -342,15 +342,15 @@ PR-AUC    & $0.9580 \pm 0.0012$ & $0.9545 \pm 0.0030$ & $+0.0035$ \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.78\textwidth]{negative_sampler_ablation.pdf}
-\caption{Paired ablation between physics-informed and heuristic negative synthesis across three independent random initializations with byte-identical starting weights. Error bars are $\pm1$ sample standard deviation ($n=3$); per-seed F1 deltas are $+0.0366$, $-0.0038$, $+0.0215$. With $n=3$ no formal significance test is powered; the consistent positive mean is reported descriptively.}
+\caption{Paired ablation between physics-informed and heuristic negative synthesis across three independent random initializations with byte-identical starting weights. Error bars are $\pm1$ sample standard deviation ($n=3$); per-seed F1 deltas are $+0.0366$, $-0.0038$, $+0.0215$. Annotations show mean differences in percentage points. Results are descriptive.}
 \label{fig:negative-sampler-ablation}
 \end{figure}
 
-To isolate the contribution of physics-informed negative synthesis, we perform a controlled ablation on the optimal Conv1D architecture. Models are trained under identical conditions using either the physics-informed transfer-ratio sampler or a baseline heuristic injector (combining spectral noise, random amplitude scaling, and frequency warping). The experiment is replicated across three independent paired initializations, verifying matching SHA-256 weight hashes at initialization.
+To isolate the contribution of physics-informed negative synthesis, we perform a controlled ablation on the best-performing Conv1D configuration. Models are trained under identical conditions using either the physics-informed transfer-ratio sampler or a baseline heuristic injector (combining spectral noise, random amplitude scaling, and frequency warping). The experiment is replicated across three independent paired initializations, verifying matching SHA-256 weight hashes at initialization.
 
 As detailed in Table~\ref{tab:negative-sampler-ablation} and Fig.~\ref{fig:negative-sampler-ablation}, physics-informed synthesis increases mean F1-score from $0.8659 \pm 0.0154$ to $0.8840 \pm 0.0054$, representing a mean paired improvement of $+0.0181$. Individual paired F1 differences across the three runs are $+0.0366$, $-0.0038$, and $+0.0215$. With $n=3$, formal paired $t$-tests are underpowered and sensitive to the single negative delta; we therefore report effect size descriptively and provide per-seed deltas rather than a $p$-value. The gain is driven primarily by a $+0.0339$ increase in recall ($0.8378$ vs.~$0.8039$), while precision remains comparable ($0.9361$ vs.~$0.9390$). Bootstrap intervals for $n=3$ are unstable and omitted; the three-seed spread itself quantifies variability. 
 
-These results demonstrate that synthesizing negatives via analytic transfer ratios forces the encoder to learn decision boundaries that align with true physical degradation paths, significantly reducing false negatives on subtle, incipient component faults.
+On this fixed-load split, the physics-informed sampler increased recall on average across the three paired runs.
 
 \section{Conclusion, Scientific Limitations, and Future Work}
 \label{sec:conclusion}
@@ -360,7 +360,7 @@ This paper presented a self-supervised, physics-informed contrastive anomaly det
 The companion study reports model conversion, post-training quantization and power measurements for these models on Jetson Nano~\cite{jsc_edge_deployment}.
 
 \subsection{Scientific Limitations and Future Research Trajectories}
-While the presented framework advances physics-informed representation learning, three foundational scientific limitations motivate future research:
+While the presented framework advances physics-informed representation learning, the following limitations define the scope of the conclusions:
 \begin{enumerate}
     \item \textbf{Small-Signal Linearization vs. Large-Signal Non-Linear Dynamics:} The current generative transfer ratio $\tilde{H}(s)/H^{(0)}(s)$ is derived from small-signal state-space averaging around a fixed nominal operating point. In extreme degradation or severe load transients, converters exhibit nonlinear switching phenomena, duty cycle saturation, and switching-frequency harmonics. Future work will formulate nonlinear, state-dependent perturbation ratios incorporating large-signal averaged models and continuous differential algebraic equations (DAEs) directly into the contrastive objective~\cite{raissi2019pinn}.
     \item \textbf{In-Silico Simulation vs. Physical Hardware Domain Shift:} The training and benchmark datasets are generated in high-fidelity PSIM digital twins. Physical Frequency Response Analyzer (FRA) hardware injections introduce swept-sine measurement jitter, parasitic printed circuit board (PCB) trace couplings, and sensor non-linearities. Bridging this gap will require unsupervised domain adaptation and adversarial feature alignment to transfer digital-twin representations to noisy physical instrumentation.
