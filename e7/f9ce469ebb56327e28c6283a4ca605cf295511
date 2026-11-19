@@ -1,0 +1,27 @@
+README.md
+  s_066a1cbbd1b060::t_c23fedf1014fb7 3,5-7,21,28-29,31
+papers/jsc_edge_deployment/main.tex
+  s_066a1cbbd1b060::t_f60092029c052a 33-34,42,94-99,152,175-180,191-194,196,238,240-241,245,249,309,312,315,317,358,366-367,373,375-378,386,392,399,402
+papers/jsc_edge_deployment/references.bib
+  s_066a1cbbd1b060::t_8d75d691a1cf49 225,228,230
+papers/mmas_anomaly_detection/main.tex
+  s_066a1cbbd1b060::t_bfb2c14181ea39 33-34,42,50,58,64,122,185,238,246,255,257,267,272,277,281,309,313,315,317,326,328-331,333,341,345,349,354,356,359,370,373
+papers/mmas_anomaly_detection/references.bib
+  s_066a1cbbd1b060::t_01765bca89fcc4 383,386,388
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "e7f9ce469ebb56327e28c6283a4ca605cf295511",
+  "prompts": {},
+  "sessions": {
+    "s_066a1cbbd1b060": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1ede1-6a93-7d00-b934-9f7cce57ac7d",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "Ignacio Martin Salinas <ignacioms@inditex.com>"
+    }
+  }
+}
